@@ -4,7 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>aspnet-SCPSLPluginBrowser-9781aa1a-8828-4d58-ab5e-1198e2fd88f3</UserSecretsId>
+    <UserSecretsId>aspnet-SCPSLPluginBrowser-f4844a68-e75f-4eca-8a76-ec3f0df3c296</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,0 +1,30 @@
+﻿@model SCPSLPluginBrowser.Data.DllFile
+
+@{
+    ViewData["Title"] = $"Details of {Model.FileName}";
+}
+
+<h2>Details</h2>
+
+<div class="card">
+    <div class="card-header">
+        <h3>@Model.FileName</h3>
+    </div>
+    <div class="card-body">
+        <p><strong>Description:</strong> @Model.Description</p>
+        @if (Model.User != null)
+        {
+            <p><strong>Uploaded By:</strong> @Model.User.UserName</p>
+        }
+        else
+        {
+            <p><strong>Uploaded By:</strong> User information not available</p>
+        }
+        <p><strong>Created At:</strong> @Model.CreatedAt</p>
+        <img src="@Model.Icon" alt="@Model.FileName" class="img-fluid" style="max-width: 200px;" />
+    </div>
+    <div class="card-footer">
+        <a asp-action="Download" asp-route-id="@Model.Id" class="btn btn-primary">Download</a>
+        <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+    </div>
+</div>

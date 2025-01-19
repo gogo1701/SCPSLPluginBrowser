@@ -1,0 +1,37 @@
+﻿@model IEnumerable<SCPSLPluginBrowser.Data.DllFile>
+
+@{
+    ViewData["Title"] = "DLL Files";
+}
+
+<h2>DLL Files</h2>
+
+<form method="get" asp-action="Index" class="mb-3">
+    <div class="input-group">
+        <input type="text" name="searchTerm" class="form-control" placeholder="Search by name or description" value="@ViewBag.SearchTerm" />
+        <button class="btn btn-primary" type="submit">Search</button>
+    </div>
+</form>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var file in Model)
+        {
+            <tr>
+                <td>@file.FileName</td>
+                <td>@file.Description</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@file.Id" class="btn btn-info btn-sm">View</a>
+                    <a asp-action="Download" asp-route-id="@file.Id" class="btn btn-primary btn-sm">Download</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
