@@ -2,6 +2,8 @@
 
 @{
     ViewData["Title"] = $"Details of {Model.FileName}";
+    var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier).Value;
+    var userLiked = Model.Likes?.Any(l => l.UserId == userId) ?? false;
 }
 
 <h2>Details</h2>
@@ -24,6 +26,13 @@
         <img src="@Model.Icon" alt="@Model.FileName" class="img-fluid" style="max-width: 200px;" />
     </div>
     <div class="card-footer">
+        <form asp-action="Like" asp-controller="DllFile" method="post">
+            <input type="hidden" name="fileId" value="@Model.Id" />
+            <button type="submit" class="btn @(userLiked ? "btn-danger" : "btn-success")">
+                @(userLiked ? "Unlike" : "Like")
+            </button>
+            <span class="ml-2">Likes: @Model.Likes?.Count</span>
+        </form>
         <a asp-action="Download" asp-route-id="@Model.Id" class="btn btn-primary">Download</a>
         <a asp-action="Index" class="btn btn-secondary">Back to List</a>
     </div>

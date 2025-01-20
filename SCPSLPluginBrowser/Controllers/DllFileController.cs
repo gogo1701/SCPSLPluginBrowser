@@ -14,10 +14,12 @@ namespace SCPSLPluginBrowser.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<DllFileController> _logger;
+        private readonly UserManager<ApplicationUser> _manager;
 
 
-        public DllFileController(ApplicationDbContext context, ILogger<DllFileController> logger)
+        public DllFileController(ApplicationDbContext context, ILogger<DllFileController> logger, UserManager<ApplicationUser> manager)
         {
+            _manager = manager;
             _context = context;
             _logger = logger;
         }
@@ -25,6 +27,21 @@ namespace SCPSLPluginBrowser.Controllers
         public IActionResult Upload()
         {
             return View();
+        }
+
+        public async Task<IActionResult> Profile(string id)
+        {
+
+            var user = _context.Users.FirstOrDefault(f => f.Id == id);  
+            
+
+            if (user == null)
+            {
+                _logger.LogWarning($"No file found with ID: {id}");
+                return NotFound();
+            }
+
+            return View(user);
         }
 
         [HttpPost]
@@ -57,7 +74,7 @@ namespace SCPSLPluginBrowser.Controllers
                 return Unauthorized();
             }
 
-            ApplicationUser currentUser = await _context.Users.OfType<ApplicationUser>().FirstOrDefaultAsync(u => u.Id == userId);
+            var user = User.Identity.Name;
 
             // Handle the file data
             using (var memoryStream = new MemoryStream())
@@ -74,7 +91,6 @@ namespace SCPSLPluginBrowser.Controllers
                     FileData = fileData,
                     CreatedAt = DateTime.Now,
                     UserId = userId,  // Set the UserId for the DllFile (important for database relations)
-                    User = currentUser
                 };
 
                 _context.DllFiles.Add(dllFile);
@@ -98,12 +114,13 @@ namespace SCPSLPluginBrowser.Controllers
         }
 
         // View detailed info about a specific file
-        public IActionResult Details(int id)
+        public async Task<IActionResult> Details(int id)
         {
             _logger.LogDebug($"Attempting to retrieve file with ID: {id}");
 
-            // Test with a hardcoded id to see if files exist
-            var file = _context.DllFiles.FirstOrDefault(f => f.Id == id);  // Change 1 to an actual ID from your database
+            var file = await _context.DllFiles
+                .Include(f => f.Likes) // Include Likes
+                .FirstOrDefaultAsync(f => f.Id == id);
 
             if (file == null)
             {
@@ -112,8 +129,12 @@ namespace SCPSLPluginBrowser.Controllers
             }
 
             _logger.LogDebug($"File found: {file.FileName}");
+            var user = await _manager.FindByIdAsync(file.UserId);
+            file.User = user;
+
             return View(file);
         }
+
 
 
 
@@ -129,6 +150,46 @@ namespace SCPSLPluginBrowser.Controllers
             var fileName = file.FileName.EndsWith(".dll") ? file.FileName : $"{file.FileName}.dll";
             return File(file.FileData, "application/octet-stream", fileName);
         }
+
+        [HttpPost]
+        public async Task<IActionResult> Like(int fileId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized(); // Ensure the user is logged in
+            }
+
+            var dllFile = await _context.DllFiles.Include(f => f.Likes).FirstOrDefaultAsync(f => f.Id == fileId);
+            if (dllFile == null)
+            {
+                return NotFound();
+            }
+
+            // Check if the user has already liked the file
+            var existingLike = dllFile.Likes.FirstOrDefault(l => l.UserId == userId);
+            if (existingLike != null)
+            {
+                // Remove the like
+                _context.Likes.Remove(existingLike);
+            }
+            else
+            {
+                // Add a new like
+                var like = new Like
+                {
+                    DllFileId = fileId,
+                    UserId = userId,
+                };
+
+                _context.Likes.Add(like);
+            }
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Details", new { id = fileId });
+        }
+
 
     }
 }

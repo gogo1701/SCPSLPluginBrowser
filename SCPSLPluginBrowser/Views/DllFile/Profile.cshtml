@@ -1,0 +1,31 @@
+﻿
+@using Microsoft.AspNetCore.Identity
+@using SCPSLPluginBrowser.Data
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@model ApplicationUser;
+@{
+    ViewData["Title"] = "DLL Files";
+}
+
+<h1>User Profile</h1>
+
+<div class="card">
+    <div class="card-body">
+        <h4 class="card-title">Welcome, @Model.UserName!</h4>
+        <p class="card-text"><strong>Email:</strong> @Model.Email</p>
+        <p class="card-text"><strong>Phone Number:</strong> @(string.IsNullOrEmpty(Model.PhoneNumber) ? "Not Provided" : Model.PhoneNumber)</p>
+        <p class="card-text"><strong>Two-Factor Enabled:</strong> @(Model.TwoFactorEnabled ? "Yes" : "No")</p>
+    </div>
+</div>
+
+<hr />
+
+<h2>Your Activity</h2>
+
+<div>
+    <p><strong>Total Uploaded Files:</strong> @Model.DllFiles?.Count ?? 0</p>
+    <p><strong>Total Likes Given:</strong> @Model.Likes?.Count ?? 0</p>
+    <p><strong>Total Comments Made:</strong> @Model.Comments?.Count ?? 0</p>
+    <p><strong>Total Flags:</strong> @Model.Flags?.Count ?? 0</p>
+</div>

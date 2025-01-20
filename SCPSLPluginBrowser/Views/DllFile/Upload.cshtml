@@ -1,53 +1,70 @@
-﻿@{
+﻿@using Microsoft.AspNetCore.Identity
+@using SCPSLPluginBrowser.Data
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+@{
     ViewData["Title"] = "Upload File";
 }
 
 <h2>Upload File</h2>
 
-<form method="post" enctype="multipart/form-data">
-    <div class="form-group">
-        <label for="fileName">Plugin Name</label>
-        <input type="text" class="form-control" id="fileName" name="fileName" />
-        @if (ViewContext.ViewData.ModelState.ContainsKey("fileName") && ViewContext.ViewData.ModelState["fileName"].Errors.Any())
-        {
-            <div class="text-danger">
-                @ViewContext.ViewData.ModelState["fileName"].Errors.First().ErrorMessage
-            </div>
-        }
-    </div>
+@if (SignInManager.IsSignedIn(User))
+{
+      <div class="alert alert-info">
+    <strong>Important!</strong> Please post plugins that abide our rules. If you do upload it, you may get restricted from posting plugins or downloading them!
+  </div>
 
-    <div class="form-group">
-        <label for="file">DLL File</label>
-        <input type="file" class="form-control" id="file" name="file" />
-        @if (ViewContext.ViewData.ModelState.ContainsKey("file") && ViewContext.ViewData.ModelState["file"].Errors.Any())
-        {
-            <div class="text-danger">
-                @ViewContext.ViewData.ModelState["file"].Errors.First().ErrorMessage
-            </div>
-        }
-    </div>
+    <form method="post" enctype="multipart/form-data">
+        <div class="form-group">
+            <label for="fileName">Plugin Name</label>
+            <input type="text" class="form-control" id="fileName" name="fileName" />
+            @if (ViewContext.ViewData.ModelState.ContainsKey("fileName") && ViewContext.ViewData.ModelState["fileName"].Errors.Any())
+            {
+                <div class="text-danger">
+                    @ViewContext.ViewData.ModelState["fileName"].Errors.First().ErrorMessage
+                </div>
+            }
+        </div>
 
-    <div class="form-group">
-        <label for="description">Description</label>
-        <textarea class="form-control" id="description" name="description"></textarea>
-        @if (ViewContext.ViewData.ModelState.ContainsKey("description") && ViewContext.ViewData.ModelState["description"].Errors.Any())
-        {
-            <div class="text-danger">
-                @ViewContext.ViewData.ModelState["description"].Errors.First().ErrorMessage
-            </div>
-        }
-    </div>
+        <div class="form-group">
+            <label for="file">DLL File</label>
+            <input type="file" class="form-control" id="file" name="file" />
+            @if (ViewContext.ViewData.ModelState.ContainsKey("file") && ViewContext.ViewData.ModelState["file"].Errors.Any())
+            {
+                <div class="text-danger">
+                    @ViewContext.ViewData.ModelState["file"].Errors.First().ErrorMessage
+                </div>
+            }
+        </div>
 
-    <div class="form-group">
-        <label for="iconUrl">Icon URL</label>
-        <input type="text" class="form-control" id="iconUrl" name="iconUrl" placeholder="Enter icon URL" />
-        @if (ViewContext.ViewData.ModelState.ContainsKey("iconUrl") && ViewContext.ViewData.ModelState["iconUrl"].Errors.Any())
-        {
-            <div class="text-danger">
-                @ViewContext.ViewData.ModelState["iconUrl"].Errors.First().ErrorMessage
-            </div>
-        }
-    </div>
+        <div class="form-group">
+            <label for="description">Description</label>
+            <textarea class="form-control" id="description" name="description"></textarea>
+            @if (ViewContext.ViewData.ModelState.ContainsKey("description") && ViewContext.ViewData.ModelState["description"].Errors.Any())
+            {
+                <div class="text-danger">
+                    @ViewContext.ViewData.ModelState["description"].Errors.First().ErrorMessage
+                </div>
+            }
+        </div>
 
-    <button type="submit" class="btn btn-primary">Upload</button>
-</form>
+        <div class="form-group">
+            <label for="iconUrl">Icon URL</label>
+            <input type="text" class="form-control" id="iconUrl" name="iconUrl" placeholder="Enter icon URL" />
+            @if (ViewContext.ViewData.ModelState.ContainsKey("iconUrl") && ViewContext.ViewData.ModelState["iconUrl"].Errors.Any())
+            {
+                <div class="text-danger">
+                    @ViewContext.ViewData.ModelState["iconUrl"].Errors.First().ErrorMessage
+                </div>
+            }
+        </div>
+
+        <button type="submit" class="btn btn-primary">Upload</button>
+    </form>
+}
+else
+{
+    <div class="alert alert-danger" role="alert">
+        You can't upload plugins without being logged-in. Please login or make an account.
+    </div>
+}
