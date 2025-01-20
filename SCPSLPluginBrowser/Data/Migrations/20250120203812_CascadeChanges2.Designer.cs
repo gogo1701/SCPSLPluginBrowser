@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SCPSLPluginBrowser.Data;
 
@@ -11,9 +12,11 @@ using SCPSLPluginBrowser.Data;
 namespace SCPSLPluginBrowser.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250120203812_CascadeChanges2")]
+    partial class CascadeChanges2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -423,13 +426,13 @@ namespace SCPSLPluginBrowser.Data.Migrations
                     b.HasOne("SCPSLPluginBrowser.Data.DllFile", "DllFile")
                         .WithMany("Comments")
                         .HasForeignKey("DllFileId")
-                        .OnDelete(DeleteBehavior.ClientNoAction)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("SCPSLPluginBrowser.Data.ApplicationUser", "User")
                         .WithMany("Comments")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.ClientNoAction)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("DllFile");
@@ -453,13 +456,13 @@ namespace SCPSLPluginBrowser.Data.Migrations
                     b.HasOne("SCPSLPluginBrowser.Data.DllFile", "DllFile")
                         .WithMany("Flags")
                         .HasForeignKey("DllFileId")
-                        .OnDelete(DeleteBehavior.ClientNoAction)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("SCPSLPluginBrowser.Data.ApplicationUser", "User")
                         .WithMany("Flags")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.ClientNoAction)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("DllFile");
@@ -472,13 +475,13 @@ namespace SCPSLPluginBrowser.Data.Migrations
                     b.HasOne("SCPSLPluginBrowser.Data.DllFile", "DllFile")
                         .WithMany("Likes")
                         .HasForeignKey("DllFileId")
-                        .OnDelete(DeleteBehavior.ClientNoAction)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.HasOne("SCPSLPluginBrowser.Data.ApplicationUser", "User")
                         .WithMany("Likes")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.ClientNoAction)
+                        .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("DllFile");

@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -149,6 +151,14 @@ namespace SCPSLPluginBrowser.Controllers
 
             var fileName = file.FileName.EndsWith(".dll") ? file.FileName : $"{file.FileName}.dll";
             return File(file.FileData, "application/octet-stream", fileName);
+        }
+
+        [Authorize(Roles = "Owner,Admin")]
+        public async Task<IActionResult> AdminDelete(int id)
+        {
+            _context.Remove(_context.DllFiles.Single(a => a.Id == id));
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Index");
         }
 
         [HttpPost]

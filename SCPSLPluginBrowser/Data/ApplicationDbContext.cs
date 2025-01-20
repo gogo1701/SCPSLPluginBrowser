@@ -15,42 +15,42 @@ namespace SCPSLPluginBrowser.Data
         {
             base.OnModelCreating(modelBuilder);
 
-
             modelBuilder.Entity<Like>()
-                .HasOne(l => l.DllFile)
-                .WithMany(d => d.Likes)
-                .HasForeignKey(l => l.DllFileId)
-                .OnDelete(DeleteBehavior.Restrict);
+                 .HasOne(l => l.DllFile)
+                 .WithMany(d => d.Likes)
+                 .HasForeignKey(l => l.DllFileId)
+                 .OnDelete(DeleteBehavior.ClientNoAction);
 
             modelBuilder.Entity<Like>()
                 .HasOne(l => l.User)
                 .WithMany(u => u.Likes)
                 .HasForeignKey(l => l.UserId)
-                .OnDelete(DeleteBehavior.Restrict); 
+                .OnDelete(DeleteBehavior.ClientNoAction);
 
             modelBuilder.Entity<Comment>()
                 .HasOne(c => c.DllFile)
                 .WithMany(d => d.Comments)
                 .HasForeignKey(c => c.DllFileId)
-                .OnDelete(DeleteBehavior.Restrict); 
+                .OnDelete(DeleteBehavior.ClientNoAction);
 
             modelBuilder.Entity<Comment>()
                 .HasOne(c => c.User)
                 .WithMany(u => u.Comments)
                 .HasForeignKey(c => c.UserId)
-                .OnDelete(DeleteBehavior.Restrict); 
+                .OnDelete(DeleteBehavior.ClientNoAction);
 
             modelBuilder.Entity<Flag>()
                 .HasOne(f => f.DllFile)
                 .WithMany(d => d.Flags)
                 .HasForeignKey(f => f.DllFileId)
-                .OnDelete(DeleteBehavior.Restrict); 
+                .OnDelete(DeleteBehavior.ClientNoAction);
 
             modelBuilder.Entity<Flag>()
                 .HasOne(f => f.User)
                 .WithMany(u => u.Flags)
                 .HasForeignKey(f => f.UserId)
-                .OnDelete(DeleteBehavior.Restrict); 
+                .OnDelete(DeleteBehavior.ClientNoAction);
+
         }
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options)
