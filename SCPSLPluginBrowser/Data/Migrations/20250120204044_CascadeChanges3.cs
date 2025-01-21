@@ -74,7 +74,8 @@ namespace SCPSLPluginBrowser.Data.Migrations
                 table: "Likes",
                 column: "DllFileId",
                 principalTable: "DllFiles",
-                principalColumn: "Id");
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Cascade); // Cascade delete added here
         }
 
         /// <inheritdoc />
@@ -150,7 +151,7 @@ namespace SCPSLPluginBrowser.Data.Migrations
                 column: "DllFileId",
                 principalTable: "DllFiles",
                 principalColumn: "Id",
-                onDelete: ReferentialAction.Cascade);
+                onDelete: ReferentialAction.NoAction);
         }
     }
 }

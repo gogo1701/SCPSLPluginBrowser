@@ -14,8 +14,15 @@
     <div class="card-body">
         <h4 class="card-title">Welcome, @Model.UserName!</h4>
         <p class="card-text"><strong>Email:</strong> @Model.Email</p>
+        <p class="card-text"><strong>User-Id:</strong> @Model.Id</p>
         <p class="card-text"><strong>Phone Number:</strong> @(string.IsNullOrEmpty(Model.PhoneNumber) ? "Not Provided" : Model.PhoneNumber)</p>
         <p class="card-text"><strong>Two-Factor Enabled:</strong> @(Model.TwoFactorEnabled ? "Yes" : "No")</p>
+        <h4>Roles</h4>
+        @foreach(var role in await UserManager.GetRolesAsync(Model))
+        {
+            <p class="card-text"> @role </p>
+        }
+
     </div>
 </div>
 

@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -16,159 +15,180 @@ namespace SCPSLPluginBrowser.Controllers
     {
         private readonly ApplicationDbContext _context;
         private readonly ILogger<DllFileController> _logger;
-        private readonly UserManager<ApplicationUser> _manager;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-
-        public DllFileController(ApplicationDbContext context, ILogger<DllFileController> logger, UserManager<ApplicationUser> manager)
+        public DllFileController(ApplicationDbContext context, ILogger<DllFileController> logger, UserManager<ApplicationUser> userManager)
         {
-            _manager = manager;
             _context = context;
             _logger = logger;
+            _userManager = userManager;
         }
 
+        // GET: Upload
         public IActionResult Upload()
         {
             return View();
         }
 
-        public async Task<IActionResult> Profile(string id)
-        {
-
-            var user = _context.Users.FirstOrDefault(f => f.Id == id);  
-            
-
-            if (user == null)
-            {
-                _logger.LogWarning($"No file found with ID: {id}");
-                return NotFound();
-            }
-
-            return View(user);
-        }
-
+        // POST: Upload
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Upload(IFormFile file, string fileName, string description, string iconUrl)
         {
-            _logger.LogDebug("Upload action triggered.");
-
             if (file == null || file.Length == 0)
             {
-                _logger.LogWarning("No file selected.");
                 ModelState.AddModelError("file", "Please select a file to upload.");
                 return View();
             }
 
-            var validExtensions = new[] { ".dll" };
-            var fileExtension = Path.GetExtension(file.FileName).ToLower();
-            if (!validExtensions.Contains(fileExtension))
+            if (Path.GetExtension(file.FileName).ToLower() != ".dll")
             {
-                _logger.LogWarning($"Invalid file type: {fileExtension}. Expected .dll file.");
-                ModelState.AddModelError("file", "Invalid file type. Please upload a DLL file.");
+                ModelState.AddModelError("file", "Invalid file type. Only .dll files are allowed.");
                 return View();
             }
 
-            // Get UserId from the logged-in user
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId))
             {
-                _logger.LogWarning("User is not logged in.");
                 return Unauthorized();
             }
 
-            var user = User.Identity.Name;
+            using var memoryStream = new MemoryStream();
+            await file.CopyToAsync(memoryStream);
 
-            // Handle the file data
-            using (var memoryStream = new MemoryStream())
+            var dllFile = new DllFile
             {
-                await file.CopyToAsync(memoryStream);
-                byte[] fileData = memoryStream.ToArray();
+                FileName = fileName,
+                Description = description,
+                Icon = iconUrl,
+                FileData = memoryStream.ToArray(),
+                CreatedAt = DateTime.Now,
+                UserId = userId
+            };
 
-                // Create the DllFile object and assign the current user to it
-                var dllFile = new DllFile
-                {
-                    FileName = fileName,
-                    Description = description,
-                    Icon = iconUrl,
-                    FileData = fileData,
-                    CreatedAt = DateTime.Now,
-                    UserId = userId,  // Set the UserId for the DllFile (important for database relations)
-                };
-
+            try
+            {
                 _context.DllFiles.Add(dllFile);
                 await _context.SaveChangesAsync();
-
                 _logger.LogInformation($"File {fileName} uploaded successfully.");
                 return RedirectToAction("Index");
             }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error uploading file.");
+                ModelState.AddModelError(string.Empty, "An error occurred while uploading the file.");
+                return View();
+            }
         }
 
-
-
+        // GET: Index
         public IActionResult Index(string searchTerm = null)
         {
             var dllFiles = string.IsNullOrWhiteSpace(searchTerm)
                 ? _context.DllFiles.ToList()
-                : _context.DllFiles.Where(f => f.FileName.Contains(searchTerm) || f.Description.Contains(searchTerm)).ToList();
+                : _context.DllFiles
+                    .Where(f => EF.Functions.Like(f.FileName, $"%{searchTerm}%") || EF.Functions.Like(f.Description, $"%{searchTerm}%"))
+                    .ToList();
 
             ViewBag.SearchTerm = searchTerm;
             return View(dllFiles);
         }
 
-        // View detailed info about a specific file
+        // GET: Details
         public async Task<IActionResult> Details(int id)
         {
-            _logger.LogDebug($"Attempting to retrieve file with ID: {id}");
-
             var file = await _context.DllFiles
-                .Include(f => f.Likes) // Include Likes
+                .Include(f => f.Likes)
+                .Include(f => f.Comments).ThenInclude(c => c.User)
                 .FirstOrDefaultAsync(f => f.Id == id);
 
             if (file == null)
             {
-                _logger.LogWarning($"No file found with ID: {id}");
                 return NotFound();
             }
 
-            _logger.LogDebug($"File found: {file.FileName}");
-            var user = await _manager.FindByIdAsync(file.UserId);
+            var user = await _userManager.FindByIdAsync(file.UserId);
             file.User = user;
-
             return View(file);
         }
 
-
-
-
-        // File download
-        public IActionResult Download(int id)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddAdmin(string userId)
         {
-            var file = _context.DllFiles.FirstOrDefault(f => f.Id == id);
-            if (file == null)
+            if (string.IsNullOrEmpty(userId))
+            {
+                ViewBag.Message = "User ID cannot be empty.";
+                return View();
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                ViewBag.Message = "User not found.";
+                return View();
+            }
+
+            var result = await _userManager.AddToRoleAsync(user, "Admin");
+            if (result.Succeeded)
+            {
+                _logger.LogInformation($"User {user.UserName} has been promoted to Admin.");
+                return RedirectToAction("Index", "DllFile"); // Redirect to DllFile index
+            }
+            else
+            {
+                _logger.LogWarning($"Failed to promote user {user.UserName} to Admin.");
+                ViewBag.Message = "An error occurred while promoting the user to Admin.";
+                return View();
+            }
+        }
+
+        [HttpGet]
+        public IActionResult AddAdmin()
+        {
+            return View();
+        }
+
+
+        // POST: AddComment
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddComment(int fileId, string commentText)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
+
+            var dllFile = await _context.DllFiles.FindAsync(fileId);
+            if (dllFile == null)
             {
                 return NotFound();
             }
 
-            var fileName = file.FileName.EndsWith(".dll") ? file.FileName : $"{file.FileName}.dll";
-            return File(file.FileData, "application/octet-stream", fileName);
-        }
+            var comment = new Comment
+            {
+                UserId = userId,
+                DllFileId = fileId,
+                CommentText = commentText,
+                CreatedAt = DateTime.Now
+            };
 
-        [Authorize(Roles = "Owner,Admin")]
-        public async Task<IActionResult> AdminDelete(int id)
-        {
-            _context.Remove(_context.DllFiles.Single(a => a.Id == id));
+            _context.Comments.Add(comment);
             await _context.SaveChangesAsync();
-            return RedirectToAction("Index");
+
+            return RedirectToAction("Details", new { id = fileId });
         }
 
+        // POST: Like
         [HttpPost]
         public async Task<IActionResult> Like(int fileId)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
             if (string.IsNullOrEmpty(userId))
             {
-                return Unauthorized(); // Ensure the user is logged in
+                return Unauthorized();
             }
 
             var dllFile = await _context.DllFiles.Include(f => f.Likes).FirstOrDefaultAsync(f => f.Id == fileId);
@@ -177,22 +197,14 @@ namespace SCPSLPluginBrowser.Controllers
                 return NotFound();
             }
 
-            // Check if the user has already liked the file
             var existingLike = dllFile.Likes.FirstOrDefault(l => l.UserId == userId);
             if (existingLike != null)
             {
-                // Remove the like
                 _context.Likes.Remove(existingLike);
             }
             else
             {
-                // Add a new like
-                var like = new Like
-                {
-                    DllFileId = fileId,
-                    UserId = userId,
-                };
-
+                var like = new Like { DllFileId = fileId, UserId = userId };
                 _context.Likes.Add(like);
             }
 
@@ -200,6 +212,26 @@ namespace SCPSLPluginBrowser.Controllers
             return RedirectToAction("Details", new { id = fileId });
         }
 
+        // POST: AdminDelete
+        [Authorize(Roles = "Owner")]
+        public async Task<IActionResult> AdminDelete(int id)
+        {
+            var dllFile = await _context.DllFiles
+                .Include(f => f.Likes)
+                .Include(f => f.Comments)
+                .FirstOrDefaultAsync(f => f.Id == id);
 
+            if (dllFile == null)
+            {
+                return NotFound();
+            }
+
+            _context.Likes.RemoveRange(dllFile.Likes);
+            _context.Comments.RemoveRange(dllFile.Comments);
+            _context.DllFiles.Remove(dllFile);
+
+            await _context.SaveChangesAsync();
+            return RedirectToAction("Index");
+        }
     }
 }

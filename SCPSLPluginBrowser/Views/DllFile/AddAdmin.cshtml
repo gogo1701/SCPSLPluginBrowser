@@ -1,0 +1,25 @@
+﻿@{
+    ViewData["Title"] = "Add Admin";
+}
+
+<h2>Add Admin</h2>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Promote User to Admin</h3>
+    </div>
+    <div class="card-body">
+        <form asp-action="AddAdmin" asp-controller="DllFile" method="post">
+            <div class="form-group">
+                <label for="userId">User ID</label>
+                <input type="text" id="userId" name="userId" class="form-control" placeholder="Enter User ID" required />
+            </div>
+            <button type="submit" class="btn btn-success">Promote</button>
+        </form>
+    </div>
+</div>
+
+@if (ViewBag.Message != null)
+{
+    <div class="alert alert-info mt-3">@ViewBag.Message</div>
+}

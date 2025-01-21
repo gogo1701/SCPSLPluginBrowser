@@ -2,7 +2,7 @@
 
 @{
     ViewData["Title"] = $"Details of {Model.FileName}";
-    var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier).Value;
+    var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
     var userLiked = Model.Likes?.Any(l => l.UserId == userId) ?? false;
 }
 
@@ -37,3 +37,40 @@
         <a asp-action="Index" class="btn btn-secondary">Back to List</a>
     </div>
 </div>
+
+<h3>Comments</h3>
+
+<div class="mt-3">
+    @if (Model.Comments != null && Model.Comments.Any())
+    {
+        <ul class="list-group">
+            @foreach (var comment in Model.Comments)
+            {
+                <li class="list-group-item">
+                    <strong>@comment.User.UserName:</strong> @comment.CommentText
+                    <br />
+                    <small class="text-muted">@comment.CreatedAt.ToString("g")</small>
+                </li>
+            }
+        </ul>
+    }
+    else
+    {
+        <p>No comments yet. Be the first to comment!</p>
+    }
+</div>
+
+@if (User.Identity.IsAuthenticated)
+{
+    <form asp-action="AddComment" asp-controller="DllFile" method="post" class="mt-3">
+        <input type="hidden" name="fileId" value="@Model.Id" />
+        <div class="form-group">
+            <textarea name="commentText" class="form-control" placeholder="Write a comment..." required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Comment</button>
+    </form>
+}
+else
+{
+    <p class="text-muted">Log in to leave a comment.</p>
+}
