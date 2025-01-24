@@ -94,6 +94,21 @@ namespace SCPSLPluginBrowser.Controllers
             return View(dllFiles);
         }
 
+        public async Task<IActionResult> Profile(string id)
+        {
+
+            var user = _context.Users.FirstOrDefault(f => f.Id == id);
+
+
+            if (user == null)
+            {
+                _logger.LogWarning($"No file found with ID: {id}");
+                return NotFound();
+            }
+
+            return View(user);
+        }
+
         // GET: Details
         public async Task<IActionResult> Details(int id)
         {
