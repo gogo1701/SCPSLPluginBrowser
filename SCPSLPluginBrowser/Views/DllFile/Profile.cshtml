@@ -31,8 +31,38 @@
 <h2>Your Activity</h2>
 
 <div>
-    <p><strong>Total Uploaded Files:</strong> @Model.DllFiles?.Count ?? 0</p>
-    <p><strong>Total Likes Given:</strong> @Model.Likes?.Count ?? 0</p>
-    <p><strong>Total Comments Made:</strong> @Model.Comments?.Count ?? 0</p>
-    <p><strong>Total Flags:</strong> @Model.Flags?.Count ?? 0</p>
+    <p><strong>Total Uploaded Files:</strong> @Model.DllFiles?.Count</p>
+    <p><strong>Total Likes Given:</strong> @Model.Likes?.Count</p>
+    <p><strong>Total Comments Made:</strong> @Model.Comments?.Count</p>
+    <p><strong>Total Flags:</strong> @Model.Flags?.Count</p>
 </div>
+
+<h3>Plugins published by @Model.UserName.</h3>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var file in Model.DllFiles)
+        {
+            <tr>
+                <td>@file.FileName</td>
+                <td>@file.Description</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@file.Id" class="btn btn-info btn-sm">View</a>
+                    <a asp-action="Download" asp-route-id="@file.Id" class="btn btn-primary btn-sm">Download</a>
+
+                    @if (User.IsInRole("Admin") || User.IsInRole("Owner"))
+                    {
+                        <a asp-action="AdminDelete" asp-route-id="@file.Id" class="btn btn-danger btn-sm">Remove as administrator</a>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

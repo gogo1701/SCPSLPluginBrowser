@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -96,8 +97,9 @@ namespace SCPSLPluginBrowser.Controllers
 
         public async Task<IActionResult> Profile(string id)
         {
-
             var user = _context.Users.FirstOrDefault(f => f.Id == id);
+
+            ApplicationUser newUser = (ApplicationUser)user;
 
 
             if (user == null)
@@ -106,7 +108,23 @@ namespace SCPSLPluginBrowser.Controllers
                 return NotFound();
             }
 
-            return View(user);
+            foreach (var dllfile in _context.DllFiles)
+            {
+                if (dllfile.UserId == id)
+                {
+                    newUser.DllFiles.Add(dllfile);
+                }
+            }
+
+            foreach (var comment in _context.Comments)
+            {
+                if (comment.UserId == id)
+                {
+                    newUser.Comments.Add(comment);
+                }
+            }
+
+            return View(newUser);
         }
 
         // GET: Details
@@ -134,36 +152,76 @@ namespace SCPSLPluginBrowser.Controllers
             if (string.IsNullOrEmpty(userId))
             {
                 ViewBag.Message = "User ID cannot be empty.";
-                return View();
+                var admins = _userManager.GetUsersInRoleAsync("Admin").Result;
+                return View(admins); 
             }
 
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
                 ViewBag.Message = "User not found.";
-                return View();
+                var admins = await _userManager.GetUsersInRoleAsync("Admin");
+                return View(admins); 
             }
 
             var result = await _userManager.AddToRoleAsync(user, "Admin");
             if (result.Succeeded)
             {
                 _logger.LogInformation($"User {user.UserName} has been promoted to Admin.");
-                return RedirectToAction("Index", "DllFile"); // Redirect to DllFile index
+                return RedirectToAction("Index", "DllFile");
             }
             else
             {
                 _logger.LogWarning($"Failed to promote user {user.UserName} to Admin.");
                 ViewBag.Message = "An error occurred while promoting the user to Admin.";
-                return View();
+                var admins = await _userManager.GetUsersInRoleAsync("Admin");
+                return View(admins); 
             }
         }
 
+
+
         [HttpGet]
-        public IActionResult AddAdmin()
+        public async Task<IActionResult> AddAdmin()
         {
-            return View();
+            var usersInRole = await new UserStore<ApplicationUser>(_context).GetUsersInRoleAsync("Admin");
+
+            ICollection<ApplicationUser> users = usersInRole;
+
+            return View(users);
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Owner")]
+        public async Task<IActionResult> RemoveAdmin(string userId)
+        {
+            if (string.IsNullOrEmpty(userId))
+            {
+                ViewBag.Message = "User ID cannot be empty.";
+                return RedirectToAction("AddAdmin", "DllFile");
+            }
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+            {
+                ViewBag.Message = "User not found.";
+                return RedirectToAction("AddAdmin", "DllFile");
+            }
+
+            var result = await _userManager.RemoveFromRoleAsync(user, "Admin");
+            if (result.Succeeded)
+            {
+                _logger.LogInformation($"User {user.UserName} has been promoted to Admin.");
+                return RedirectToAction("AddAdmin", "DllFile");
+            }
+            else
+            {
+                _logger.LogWarning($"Failed to promote user {user.UserName} to Admin.");
+                ViewBag.Message = "An error occurred while promoting the user to Admin.";
+                return RedirectToAction("AddAdmin", "DllFile");
+            }
+        }
 
         // POST: AddComment
         [HttpPost]
@@ -227,8 +285,21 @@ namespace SCPSLPluginBrowser.Controllers
             return RedirectToAction("Details", new { id = fileId });
         }
 
+        public IActionResult Download(int id)
+        {
+            var file = _context.DllFiles.FirstOrDefault(f => f.Id == id);
+            if (file == null)
+            {
+                return NotFound();
+            }
+
+            var fileName = file.FileName.EndsWith(".dll") ? file.FileName : $"{file.FileName}.dll";
+            return File(file.FileData, "application/octet-stream", fileName);
+        }
+
         // POST: AdminDelete
         [Authorize(Roles = "Owner")]
+        [AutoValidateAntiforgeryToken]
         public async Task<IActionResult> AdminDelete(int id)
         {
             var dllFile = await _context.DllFiles

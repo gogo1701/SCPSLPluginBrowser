@@ -17,9 +17,36 @@
             <button type="submit" class="btn btn-success">Promote</button>
         </form>
     </div>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>User ID</th>
+                <th>Username</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var admin in Model)
+            {
+                <tr>
+                    <td>@admin.Id</td>
+                    <td>@admin.UserName</td>
+                    <td>
+                        <form asp-action="RemoveAdmin" asp-controller="DllFile" method="post" style="display:inline;">
+                            <input type="hidden" name="id" value="@admin.Id" />
+                            <button type="submit" class="btn btn-danger btn-sm">Remove Admin</button>
+                        </form>
+
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
 </div>
 
 @if (ViewBag.Message != null)
 {
     <div class="alert alert-info mt-3">@ViewBag.Message</div>
 }
+
+

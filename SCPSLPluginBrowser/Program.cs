@@ -24,8 +24,8 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddLogging(logging =>
 {
     logging.ClearProviders();
-    logging.AddConsole(); // Add console logging.
-    logging.AddDebug();   // Add debug logging (Debug Output Window in IDE).
+    logging.AddConsole(); 
+    logging.AddDebug();   
 });
 
 var app = builder.Build();
@@ -37,14 +37,13 @@ using (var scope = app.Services.CreateScope())
     string[] roles = { "Owner", "Admin"};
     foreach (string role in roles)
     {
-        if (!(await roleManager.RoleExistsAsync(role)))
+         if (!(await roleManager.RoleExistsAsync(role)))
         {
             await roleManager.CreateAsync(new IdentityRole(role));
         }
     }
 }
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();
@@ -52,7 +51,6 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
